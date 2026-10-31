@@ -72,6 +72,15 @@ export function toSpeciesView(species: Species): SpeciesView {
   }
 }
 
+function planetMeasurement(
+  value: string,
+  format: (value: string) => string,
+): string {
+  // SWAPI records the unknown planet's missing measurements as "0".
+  if (value.trim() === "0") return "Unknown"
+  return format(value)
+}
+
 export function toHomeworldView(planet: Planet): HomeworldView {
   return {
     name: displayValue(planet.name),
@@ -79,9 +88,9 @@ export function toHomeworldView(planet: Planet): HomeworldView {
     terrain: displayValue(planet.terrain),
     climate: displayValue(planet.climate),
     surfaceWater: formatPercent(planet.surface_water),
-    diameter: formatMeasurement(planet.diameter, "km"),
-    rotationPeriod: withUnit(planet.rotation_period, "hr"),
-    orbitalPeriod: withUnit(planet.orbital_period, "d"),
+    diameter: planetMeasurement(planet.diameter, (value) => formatMeasurement(value, "km")),
+    rotationPeriod: planetMeasurement(planet.rotation_period, (value) => withUnit(value, "hr")),
+    orbitalPeriod: planetMeasurement(planet.orbital_period, (value) => withUnit(value, "d")),
     gravity: displayValue(planet.gravity),
   }
 }

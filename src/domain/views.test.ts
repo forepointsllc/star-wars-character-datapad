@@ -76,6 +76,30 @@ describe("view models", () => {
     })
   })
 
+  it("treats SWAPI's zero planet measurements as unknown", () => {
+    const unknownPlanet = {
+      name: "unknown",
+      population: "unknown",
+      terrain: "unknown",
+      climate: "unknown",
+      surface_water: "unknown",
+      diameter: "0",
+      rotation_period: "0",
+      orbital_period: "0",
+      gravity: "unknown",
+      url: "https://swapi.info/api/planets/28",
+    } as Planet
+
+    expect(toHomeworldView(unknownPlanet)).toMatchObject({
+      name: "Unknown",
+      population: "Unknown",
+      diameter: "Unknown",
+      rotationPeriod: "Unknown",
+      orbitalPeriod: "Unknown",
+      gravity: "Unknown",
+    })
+  })
+
   it("sorts films by episode", () => {
     const films = [
       { title: "A New Hope", episode_id: 4, url: "https://swapi.info/api/films/1" },
