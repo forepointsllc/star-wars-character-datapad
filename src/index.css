@@ -214,7 +214,15 @@ h3 {
   display: flex;
   gap: 12px;
   overflow-x: auto;
-  padding-bottom: 4px;
+  margin: 0;
+  padding: 0 0 4px;
+  list-style: none;
+}
+
+.craft-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .film {

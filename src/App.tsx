@@ -1,7 +1,15 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { createResourceCache } from "./api/cache.ts"
 import { createSwapiClient, type SwapiClient } from "./api/client.ts"
 import type { Person } from "./api/types.ts"
+import { CharacterDetail } from "./components/CharacterDetail.tsx"
 import { CharacterList } from "./components/CharacterList.tsx"
+import {
+  loadCharacterSection,
+  loadCharacterSections,
+  type CharacterSections,
+  type SectionKey,
+} from "./domain/loadDetails.ts"
 import { searchPeople } from "./domain/search.ts"
 
 type AppProps = {
@@ -10,12 +18,19 @@ type AppProps = {
 
 export default function App({ client }: AppProps) {
   const api = useMemo(() => client ?? createSwapiClient(), [client])
+  const cache = useMemo(() => createResourceCache(), [])
   const [people, setPeople] = useState<Person[] | null>(null)
   const [listError, setListError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState("")
   const [selectedUrl, setSelectedUrl] = useState<string | null>(null)
   const [attempt, setAttempt] = useState(0)
+  const [sections, setSections] = useState<CharacterSections | null>(null)
+  const [sectionsUrl, setSectionsUrl] = useState<string | null>(null)
+  const selectedUrlRef = useRef(selectedUrl)
+  useEffect(() => {
+    selectedUrlRef.current = selectedUrl
+  }, [selectedUrl])
 
   useEffect(() => {
     let cancelled = false
@@ -51,6 +66,34 @@ export default function App({ client }: AppProps) {
     selected && filtered.some((person) => person.url === selected.url)
       ? selected
       : null
+  const related =
+    visibleSelection && sections && sectionsUrl === visibleSelection.url
+      ? sections
+      : null
+
+  useEffect(() => {
+    if (!visibleSelection) return
+    let cancelled = false
+    const url = visibleSelection.url
+    loadCharacterSections(visibleSelection, api, cache).then((next) => {
+      if (cancelled) return
+      setSections(next)
+      setSectionsUrl(url)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [visibleSelection, api, cache])
+
+  function retrySection(section: SectionKey) {
+    if (!visibleSelection || !related) return
+    const url = visibleSelection.url
+    setSections({ ...related, [section]: { status: "loading" } })
+    loadCharacterSection(section, visibleSelection, api, cache).then((next) => {
+      if (selectedUrlRef.current !== url) return
+      setSections((current) => (current ? { ...current, [section]: next } : current))
+    })
+  }
 
   return (
     <div className="page">
@@ -80,13 +123,11 @@ export default function App({ client }: AppProps) {
             setAttempt((value) => value + 1)
           }}
         />
-        <section className="detail" aria-label="Character details">
-          {visibleSelection ? (
-            <h2>{visibleSelection.name}</h2>
-          ) : (
-            <p className="empty">Select a character to see details.</p>
-          )}
-        </section>
+        <CharacterDetail
+          person={visibleSelection}
+          sections={related}
+          onRetry={retrySection}
+        />
       </div>
     </div>
   )
