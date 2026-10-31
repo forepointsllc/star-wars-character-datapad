@@ -1,0 +1,18 @@
+:root {
+  font-family: "Segoe UI", system-ui, sans-serif;
+  color: #1c2b33;
+  background: #f7f8f6;
+  line-height: 1.4;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+#root {
+  min-height: 100vh;
+}
